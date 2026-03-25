@@ -23,19 +23,28 @@ public:
     explicit Window(const Config& cfg = {})
         : width_(cfg.width), height_(cfg.height)
     {
-        if (SDL_Init(SDL_INIT_VIDEO) < 0)
-            throw std::runtime_error(SDL_GetError());
+       
+    if (SDL_Init(SDL_INIT_VIDEO) < 0)
+        throw std::runtime_error(SDL_GetError());
 
-        uint32_t flags = SDL_WINDOW_SHOWN;
-        if (cfg.resizable) flags |= SDL_WINDOW_RESIZABLE;
+    uint32_t flags = SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI;
+    if (!cfg.resizable) flags &= ~SDL_WINDOW_RESIZABLE;
+    else flags |= SDL_WINDOW_RESIZABLE;
 
-        win_ = SDL_CreateWindow(cfg.title.data(),
-                SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-                width_, height_, flags);
-        if (!win_) throw std::runtime_error(SDL_GetError());
+    win_ = SDL_CreateWindow(
+        cfg.title.data(),
+        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+        cfg.width, cfg.height,
+        flags
+    );
+    if (!win_) throw std::runtime_error(SDL_GetError());
 
-        surf_ = SDL_GetWindowSurface(win_);
-        fb_.resize(width_, height_);
+    // Читання HiDPI розміру
+    get_drawable_size(win_, width_, height_);
+
+    surf_ = SDL_GetWindowSurface(win_);
+    fb_.resize(width_, height_);
+
     }
 
     ~Window() {
