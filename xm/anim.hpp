@@ -1,15 +1,17 @@
-// xm/anim.hpp  —  Lightweight animation engine
-// Drives per-widget float transitions used by buttons, lists, menus.
-// C++17, no deps.
 #pragma once
 #include <cmath>
 #include <unordered_map>
 #include <cstdint>
+#include <algorithm> // for std::min, std::max
 
 namespace xm {
 
-// ── Easing functions ──────────────────────────────────────────────────────────
+// ── Basic Color type ──────────────────────────────────────────────────────────
+struct Color {
+    uint8_t r, g, b, a;
+};
 
+// ── Easing functions ──────────────────────────────────────────────────────────
 namespace ease {
     inline float linear   (float t) { return t; }
     inline float in_quad  (float t) { return t*t; }
@@ -17,11 +19,9 @@ namespace ease {
     inline float in_out   (float t) {
         return t < .5f ? 2.f*t*t : -1.f+(4.f-2.f*t)*t;
     }
-    // Exponential — snappy deceleration (great for menus opening)
     inline float out_expo (float t) {
         return t >= 1.f ? 1.f : 1.f - std::pow(2.f, -10.f*t);
     }
-    // Overshoot spring (great for list item selection)
     inline float out_back (float t) {
         constexpr float c = 1.70158f, c1 = c + 1.f;
         return 1.f + c1*(t-1.f)*(t-1.f)*(t-1.f) + c*(t-1.f)*(t-1.f);
@@ -29,12 +29,10 @@ namespace ease {
 }
 
 // ── Tween ─────────────────────────────────────────────────────────────────────
-// A single animated float.  Call tick() every frame, read value().
-
 struct Tween {
     float from   = 0.f;
     float to     = 0.f;
-    float dur    = 0.15f;   // seconds
+    float dur    = 0.15f;
     float elapsed= 0.f;
     bool  active = false;
     float (*ease_fn)(float) = ease::out_quad;
@@ -52,7 +50,6 @@ struct Tween {
 
     void snap(float v) { from=to=v; elapsed=dur; active=false; }
 
-    // Returns true while still animating
     bool tick(float dt) {
         if (!active) return false;
         elapsed += dt;
@@ -70,23 +67,16 @@ struct Tween {
 };
 
 // ── AnimPool ──────────────────────────────────────────────────────────────────
-// One pool per UI context.  Key = widget ID + channel index.
-// Automatically creates Tweens on first access.
-
 class AnimPool {
 public:
-    // Retrieve or create a tween keyed by (widget_id, channel)
     Tween& get(uint32_t id, int channel = 0) {
         return pool_[(uint64_t(id) << 8) | uint8_t(channel)];
     }
 
-    // Tick all active tweens; dt = delta seconds
     void tick_all(float dt) {
         for (auto& [k, tw] : pool_) tw.tick(dt);
     }
 
-    // Convenience: drive a 0→1 hover tween (call every frame)
-    // Returns current animated value
     float hover(uint32_t id, bool hovered, float dt,
                 float dur_in=0.08f, float dur_out=0.12f)
     {
@@ -98,7 +88,6 @@ public:
         return tw.current();
     }
 
-    // Drive a 0→1 press/active tween
     float press(uint32_t id, bool active, float dt, float dur=0.06f)
     {
         auto& tw = get(id, 1);
@@ -108,7 +97,6 @@ public:
         return tw.current();
     }
 
-    // Drive open/close (0→1) for menus/dropdowns
     float open(uint32_t id, bool is_open, float dt, float dur=0.14f)
     {
         auto& tw = get(id, 2);
@@ -119,7 +107,6 @@ public:
         return tw.current();
     }
 
-    // Selection slide: animates a float toward a target row index position
     float select(uint32_t id, float target_y, float dt, float dur=0.18f)
     {
         auto& tw = get(id, 3);
@@ -133,8 +120,7 @@ private:
     std::unordered_map<uint64_t, Tween> pool_;
 };
 
-// ── Color lerp (for animated color transitions) ───────────────────────────────
-
+// ── Color lerp ────────────────────────────────────────────────────────────────
 inline Color lerp_color(Color a, Color b, float t) {
     t = std::min(std::max(t, 0.f), 1.f);
     return {
