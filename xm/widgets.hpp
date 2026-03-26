@@ -7,6 +7,9 @@
 #include "anim.hpp"
 #include <string_view>
 #include <string>
+#include <fstream>
+#include <sstream>
+#include <unordered_map>
 #include <vector>
 #include <functional>
 #include <algorithm>
