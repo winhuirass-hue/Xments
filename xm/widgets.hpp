@@ -130,6 +130,15 @@ class UI {
 public:
     UI(Renderer& r, const InputState& in, const Style& s = {})
         : r_(r), in_(in), s_(s) {}
+        
+    Style current_theme;
+
+    explicit Window(const Config& cfg = Config{}) {
+        current_theme = Style{}; // default
+    }
+
+    void set_theme(const Style& s) { current_theme = s; }
+    void load_theme(const std::string& file) { current_theme = load_xss(file); }
 
     void set_style(const Style& s) { s_ = s; }
     
