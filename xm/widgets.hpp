@@ -69,6 +69,47 @@ inline Style dark_style() {
     return s;
 }
 
+inline Style load_xss(const std::string& path) {
+    Style s;
+    std::ifstream file(path);
+    std::string line;
+    std::unordered_map<std::string, std::string> kv;
+
+    while (std::getline(file, line)) {
+        if (line.empty() || line[0]=='/' || line[0]=='#') continue;
+        std::istringstream iss(line);
+        std::string key, eq, val;
+        if (iss >> key >> eq >> val && eq=="=") {
+            kv[key] = val;
+        }
+    }
+
+    auto parse_color = [](const std::string& hex) {
+        if (hex.empty() || hex[0] != '#') return colors::transparent;
+        uint32_t v = std::stoul(hex.substr(1), nullptr, 16);
+        return Color::rgba((v>>16)&0xFF, (v>>8)&0xFF, v&0xFF, 255);
+    };
+
+    if (kv.count("bg"))          s.bg          = parse_color(kv["bg"]);
+    if (kv.count("surface"))     s.surface     = parse_color(kv["surface"]);
+    if (kv.count("surface_hov")) s.surface_hov = parse_color(kv["surface_hov"]);
+    if (kv.count("surface_act")) s.surface_act = parse_color(kv["surface_act"]);
+    if (kv.count("border"))      s.border      = parse_color(kv["border"]);
+    if (kv.count("text"))        s.text        = parse_color(kv["text"]);
+    if (kv.count("accent"))      s.accent      = parse_color(kv["accent"]);
+    if (kv.count("accent_hov"))  s.accent_hov  = parse_color(kv["accent_hov"]);
+    if (kv.count("accent_act"))  s.accent_act  = parse_color(kv["accent_act"]);
+    if (kv.count("accent_text")) s.accent_text = parse_color(kv["accent_text"]);
+    if (kv.count("bar_bg"))      s.bar_bg      = parse_color(kv["bar_bg"]);
+    if (kv.count("bar_border"))  s.bar_border  = parse_color(kv["bar_border"]);
+    if (kv.count("radius"))      s.radius      = std::stoi(kv["radius"]);
+    if (kv.count("padding"))     s.padding     = std::stoi(kv["padding"]);
+    if (kv.count("font_scale"))  s.font_scale  = std::stoi(kv["font_scale"]);
+
+    return s;
+}
+
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Stable ID
 // ─────────────────────────────────────────────────────────────────────────────
@@ -91,6 +132,7 @@ public:
         : r_(r), in_(in), s_(s) {}
 
     void set_style(const Style& s) { s_ = s; }
+    
     [[nodiscard]] const Style& style() const { return s_; }
 
     float dt() const { return float(in_.delta_time); }
