@@ -72,14 +72,21 @@ public:
                 case SDL_QUIT: running=false; break;
                 case SDL_WINDOWEVENT:
                     if (ev.window.event == SDL_WINDOWEVENT_RESIZED) {
-                        width_  = ev.window.data1;
-                        height_ = ev.window.data2;
+                        SDL_GetWindowSize(win_, &win_logical_w, &win_logical_h)
+                        get_drawable_size(win_, width_, height_);
+                        
                         fb_.resize(width_, height_);
                         surf_ = SDL_GetWindowSurface(win_);
                     }
-                    break;
+                  } break;
                 case SDL_MOUSEMOTION:
-                    input_.on_mouse_move(ev.motion.x, ev.motion.y);
+                float scale_x = float(fb_w) / float(win_logical_w);
+                float scale_y = float(fb_h) / float(win_logical_h);
+                    
+                input_.on_mouse_move(
+                    int(ev.motion.x * scale_x),
+                    int(ev.motion.y * scale_y)
+                );               
                     break;
                 case SDL_MOUSEBUTTONDOWN:
                     input_.on_mouse_down(sdl_button(ev.button.button));

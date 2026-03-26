@@ -43,7 +43,7 @@ namespace xm::utf8 {
     }
 }
 
-namespace xm {
+namespace xm {}
 
 // ───────────────────────────────────────────────────────────────────────────
 // Style
@@ -227,5 +227,154 @@ public:
 
         // checkmark
         if (value) {
-            r_.draw_line(rbox.x + 3, rbox.y + box / 2,
-                         rbox.x + box / 2, rbox.y + box - 4,
+            r_.draw_line(
+                rbox.x + 3,         rbox.y + box/2,
+                rbox.x + box/2,     rbox.y + box - 4,
+                s_.accent_text, 2
+            );
+            r_.draw_line(
+                rbox.x + box/2,     rbox.y + box - 4,
+                rbox.x + box - 3,   rbox.y + 3,
+                s_.accent_text, 2
+            );
+        }
+
+        r_.draw_text(
+            cx_ + box + s_.padding,
+            cy_ + (box - th) / 2,
+            text,
+            s_.text,
+            s_.font_scale
+        );
+
+        last_w_ = full.w;
+        last_h_ = box;
+        cy_ += box + s_.padding;
+        return clicked;
+    }
+    // ───────────────────────────────────────────────────────────────────
+    // Context Menu (popup)
+    // Call begin_context_menu() on RMB; add menu items; end() to close.
+    // Returns true if an item was clicked.
+    // ───────────────────────────────────────────────────────────────────
+    
+    bool begin_context_menu(int mouse_x, int mouse_y) {
+        if (in_.mouse_pressed[1]) { // right mouse button
+            menu_open_ = true;
+            menu_x_ = mouse_x;
+            menu_y_ = mouse_y;
+        }
+        return menu_open_;
+    }
+
+    bool context_menu_item(std::string_view text) {
+        if (!menu_open_) return false;
+
+        int tw = r_.text_width(text, s_.font_scale);
+        int th = r_.text_height(s_.font_scale);
+        int w  = tw + s_.padding * 2;
+        int h  = th + s_.padding * 2;
+
+        Recti ritem{menu_x_, menu_y_ + menu_offset_y_, w, h};
+
+        bool hov = in_.hovered(ritem);
+        bool clk = in_.clicked_in(ritem);
+
+        r_.fill_rounded_rect(ritem, s_.radius,
+                             hov ? s_.surface_hov : s_.surface);
+        r_.stroke_rect(ritem, s_.border);
+
+        r_.draw_text(
+            ritem.x + s_.padding,
+            ritem.y + (h - th) / 2,
+            text,
+            s_.text,
+            s_.font_scale
+        );
+
+        menu_offset_y_ += h;
+
+        if (clk) {
+            menu_open_ = false; // auto close
+            return true;
+        }
+
+        // Close menu if clicked outside
+        if (in_.mouse_pressed[0] && !in_.hovered(ritem))
+            menu_open_ = false;
+
+        return false;
+    }
+
+    void end_context_menu() {
+        menu_open_ = false;
+        menu_offset_y_ = 0;
+    }
+    // ───────────────────────────────────────────────────────────────────
+    // Progress Bar
+    // value: 0..1
+    // ───────────────────────────────────────────────────────────────────
+    void progress_bar(float value, int w = 200, int h = 12) {
+        value = std::clamp(value, 0.f, 1.f);
+
+        Recti bg{cx_, cy_, w, h};
+        Recti fg{cx_, cy_, int(w * value), h};
+
+        r_.fill_rounded_rect(bg, 3, s_.surface);
+        r_.fill_rounded_rect(fg, 3, s_.accent);
+
+        // percentage label
+        int percent = int(value * 100.f);
+        std::string txt = std::to_string(percent) + "%";
+
+        int tw = r_.text_width(txt, s_.font_scale);
+        int th = r_.text_height(s_.font_scale);
+
+        r_.draw_text(
+            cx_ + (w - tw) / 2,
+            cy_ + (h - th) / 2,
+            txt,
+            s_.text,
+            s_.font_scale
+        );
+
+        last_w_ = w;
+        last_h_ = h;
+        cy_ += h + s_.padding;
+    }
+    // ───────────────────────────────────────────────────────────────────
+    // Image Box
+    // Draws a raw RGBA32 buffer into a rectangle.
+    // ───────────────────────────────────────────────────────────────────
+    void image_box(const uint32_t* pixels, int img_w, int img_h, int w=0, int h=0)
+    {
+        if (w == 0) w = img_w;
+        if (h == 0) h = img_h;
+
+        Recti rimg{cx_, cy_, w, h};
+
+        for (int y = 0; y < h; ++y) {
+            if (y >= img_h) break;
+            for (int x = 0; x < w; ++x) {
+                if (x >= img_w) break;
+
+                uint32_t px = pixels[y * img_w + x];
+                Color c{
+                    uint8_t((px>>16)&0xFF),
+                    uint8_t((px>> 8)&0xFF),
+                    uint8_t((px    )&0xFF),
+                    uint8_t((px>>24)&0xFF)
+                };
+
+                r_.fb().set(rimg.x + x, rimg.y + y, c);
+            }
+        }
+
+        r_.stroke_rect(rimg, s_.border);
+
+        last_w_ = w;
+        last_h_ = h;
+        cy_ += h + s_.padding;
+    }
+
+}
