@@ -43,7 +43,7 @@ namespace xm::utf8 {
     }
 }
 
-namespace xm {}
+namespace xm {
 
 // ───────────────────────────────────────────────────────────────────────────
 // Style
@@ -375,6 +375,6 @@ public:
         last_w_ = w;
         last_h_ = h;
         cy_ += h + s_.padding;
-    }
-
+    } 
+};
 }
