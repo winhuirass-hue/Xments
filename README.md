@@ -1,7 +1,7 @@
 # Xments
  
 Xments is cross-platform mini GUI toolkit with animations for minimall modern UI
-Xments is a small, animated immediate-mode UI toolkit written in C  17.
+Xments is a small, animated immediate-mode UI toolkit written in C++17.
 It uses a software framebuffer renderer and an SDL2 window/event loop.
 
 ## Features
