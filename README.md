@@ -78,7 +78,7 @@ It uses a software framebuffer renderer and an SDL2 window/event loop.
  
  Color keys:
  
- `bg`
+ - `bg`
  - `surface`
  - `surface_hov`
  - `surface_act`
