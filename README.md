@@ -33,7 +33,7 @@ It uses a software framebuffer renderer and an SDL2 window/event loop.
  
 ### Requirements
  
- C  17 compiler
+ C++17 compiler
  - CMake 3.16 
  - SDL2 development package (headers   CMake config)
  
