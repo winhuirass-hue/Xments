@@ -1,9 +1,3 @@
-diff --git a/README.md b/README.md
-index e5af82c1cb4c5926dda3f55e613fae00a5fd3f16..80dfe14e242b90b9c8d1d11462e3d2c10ade1479 100644
---- a/README.md
-+++ b/README.md
-@@ -1,3 +1,129 @@
--**Xments**
 +# Xments
  
 -Xments is cross-platform mini GUI toolkit with animations for minimall modern UI
